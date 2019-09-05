@@ -40,10 +40,24 @@ static inline int find_active_block_begin(bitset<size> bs)
 template <size_t size>
 bitset<size>& operator+=(bitset<size>& lhs, const bitset<size>& rhs)
 {
-	bool carry = false;
+	uint64_t     left;
+	uint64_t     right;
+	uint64_t     carry = 0;
+	uint64_t     intemediate_res;
+	const int    chunks_count = size / 32;
+	bitset<size> mask_get(UINT32_MAX);
+	bitset<size> mask_set = ~bitset<size>(UINT32_MAX);
 
-	for (size_t i = 0; i < size; ++i) {
-		lhs[i] = sum_bits(lhs[i], rhs[i], carry);
+	for (size_t i = 0; i < chunks_count; ++i) {
+		left = (lhs & mask_get).to_ulong();
+		right = (lhs & mask_get).to_ulong();
+		intemediate_res = left + right + carry;
+		carry = intemediate_res / UINT32_MAX;
+		intemediate_res %= UINT32_MAX;
+		lhs &= mask_set;
+		lhs |= intemediate_res;
+		//lhs &=
+		//lhs[i] = sum_bits(lhs[i], rhs[i], carry);
 	}
 	return lhs;
 }
@@ -184,6 +198,24 @@ bool test_one_mult(size_t left, size_t right)
 	return (bs_l == left * right) && (bs_r == left * right);
 }
 
+bool test_one_sum(size_t left, size_t right)
+{
+	bitset<100> bs_l(left);
+	bitset<100> bs_r(right);
+
+	bitset<100> arg_l(left);
+	bitset<100> arg_r(right);
+
+	bs_l += arg_r;
+	bs_r += arg_l;
+
+	cout << bs_l.to_string() << endl;
+	cout << arg_r.to_string() << endl;
+	cout << bs_l.to_string() << endl;
+
+	return (bs_l == left + right) && (bs_r == left + right);
+}
+
 template <size_t size>
 ostream& operator<<(ostream& os, bitset<size> bs)
 {
@@ -223,10 +255,10 @@ void print(bitset<size> tmp)
 void print_factorial(int n)
 {
 	if (n < 0)  { cout << "Argument must be positive" << endl; return; }
-	const int bits_count = 20000; // 2000! requires 19054 bits
+	const int bits_count = 20032; // 2000! requires 19054 bits and 20032 % 64 == 0
 
-	bitset<bits_count> tmp;
-	bitset<bits_count> bs = long_factorial(n, tmp);
+	///bitset<bits_count> tmp;
+	///bitset<bits_count> bs = long_factorial(n, tmp);
 
 //	for (int i = 1; i <= n; ++i) {
 //		bs *= i;
@@ -249,16 +281,17 @@ void print_factorial(int n)
 	//cout << mask.to_string() << endl;
 
 
-//	cout << "Start test" << endl;
-//	for (int i = 0; i < 1000; ++i) {
-//		for (int j = 0; j < 1000; ++j) {
-//			if (!test_one_mult(i, j)) {
-//				cout << "Error: " << i << " " << j << endl;
-//			}
-//			cout << i * 1000 + j << "\r";
-//		}
-//	}
-//	cout << "End test" << endl;
+	cout << "Start test" << endl;
+	for (int i = 0; i < 1000; ++i) {
+		for (int j = 1; j < 1000; ++j) {
+			if (!test_one_sum(i, j)) {
+				cout << "Error: " << i << " " << j << endl;
+				return;
+			}
+			cout << i * 1000 + j << "\r";
+		}
+	}
+	cout << "End test" << endl;
 
 //	bitset<100> bs(2);
 //	bs *= 2147483645;
