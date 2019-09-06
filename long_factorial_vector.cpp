@@ -20,23 +20,10 @@ using namespace std;
 class BigInt;
 ostream& operator<<(ostream& os, const BigInt& bigint);
 
-ostream& operator<<(ostream& os, __uint128_t gg) {
-
-	uint64_t left = gg / 1'000'000'000'000'000'000lu;
-	uint64_t right = gg % 1'000'000'000'000'000'000lu;
-
-	if (!left && !right) { cout << '0'; }
-	if (left) { cout << left; }
-	if (right) { cout << right; }
-	cout << endl;
-	return os;
-}
-
 class BigInt {
 public:
 	BigInt() : data(1, 0) {};
 	explicit BigInt(__uint128_t val) {
-//		cout << "Got value: " << val << endl;
 		while (val >= radix) {
 			data.push_back(val % radix);
 			val /= radix;
@@ -85,32 +72,16 @@ public:
 	BigInt& operator*=(size_t other) {
 		if (this->is_zero()) { return *this; }
 		if (!other) { *this = BigInt(0); return *this; }
-		if (other == radix) {
-			this->data.push_front(0);
-			return *this;
-		}
+		if (other == radix) { this->data.push_front(0); return *this; }
 
-		BigInt		res(0);
+		BigInt res(0);
 
-//		cout << "res0: " << res << endl;
 		for (int i = static_cast<int>(this->len()) - 1; i >= 0; --i) {
 			res *= radix;
-//			cout << "res1: " << res << endl;
-
-
-//			cout << "Going to create new from " << (*this)[i] << " and " << other << endl;
-			BigInt tmp = BigInt(static_cast<__uint128_t>((*this)[i]) * other);
-//			cout << "tmp:  " << tmp << endl;
-
-			res += tmp;
-//			cout << "res2: " << res << endl;
+			res += BigInt(static_cast<__uint128_t>((*this)[i]) * other);
 		}
 		*this = res;
 		return *this;
-	}
-	[[nodiscard]]
-	const deque<size_t>& get_data() const{ // todo no need ?
-		return this->data;
 	}
 private:
 	deque<size_t> data;
@@ -118,10 +89,6 @@ private:
 };
 
 ostream& operator<<(ostream& os, const BigInt& bigint){
-//	if (bigint.is_zero()) {
-//		cout << '0';
-//		return os;
-//	}
 	bool is_first = true;
 	for (int i = static_cast<int>(bigint.len()) - 1; i >= 0; --i) {
 		if (is_first) {
@@ -131,10 +98,6 @@ ostream& operator<<(ostream& os, const BigInt& bigint){
 			os << setw(18) << setfill('0') << bigint[i];
 		}
 	}
-//	cout << endl << bigint.len() << ": ";
-//	for (const auto i : bigint.get_data()) {
-//		cout << i << " ";
-//	}
 	return os;
 }
 
@@ -149,15 +112,8 @@ BigInt factorial(int n) {
 
 int main(int ac, char **av)
 {
-	BigInt num(0);
-	BigInt other(10'000'000'000'000'000'000lu);
-
-	num += 1;
-	//size_t fact = atoi(av[1]);
+	BigInt num;
 
 	num = factorial(atoi(av[1]));
-	//cout << endl << endl << endl << endl << endl;
 	cout <<  num << endl;
-//	num *= 29;
-//	cout << "29: " << num << endl;
 }
