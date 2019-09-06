@@ -234,7 +234,7 @@ ostream& operator<<(ostream& os, bitset<size> bs)
 		if (is_first) {
 			cout << item;
 			is_first = false;
-		} else {
+		} else{
 			cout  << setw(19) << setfill('0') << item;
 		}
 	}
@@ -242,7 +242,7 @@ ostream& operator<<(ostream& os, bitset<size> bs)
 }
 
 template <size_t size>
-bitset<size> long_factorial(int n, bitset<size> tmp)
+bitset<size> long_factorial(int n, bitset<size> tmp) // todo rm tmp
 {
 	bitset<size> bs(1);
 	for (int i = 1; i <= n; ++i) {
@@ -255,6 +255,15 @@ template <size_t size>
 void print(bitset<size> tmp)
 {
 	cout << tmp << endl;
+}
+
+template <size_t size>
+void print_bin(bitset<size> tmp)
+{
+	string str = tmp.to_string();
+	string to_print(find(str.begin(), str.end(), '1'), str.end());
+
+	cout << to_print << endl;
 }
 
 void print_factorial(int n)

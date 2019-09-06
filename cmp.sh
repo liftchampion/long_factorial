@@ -2,5 +2,8 @@
 
 av=("$@")
 arg=${av[1]}
-
-diff =(python3 fact.py "$arg") =(./a.out "$arg")
+for (( i = 0; i <= $arg; i++ ))
+do
+  echo $i
+  diff =(python3 fact.py "$i") =(./a.out "$i")
+done
