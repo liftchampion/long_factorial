@@ -40,24 +40,50 @@ static inline int find_active_block_begin(bitset<size> bs)
 template <size_t size>
 bitset<size>& operator+=(bitset<size>& lhs, const bitset<size>& rhs)
 {
-	uint64_t     left;
-	uint64_t     right;
-	uint64_t     carry = 0;
-	uint64_t     intemediate_res;
-	const int    chunks_count = size / 32;
-	bitset<size> mask_get(UINT32_MAX);
-	bitset<size> mask_set = ~bitset<size>(UINT32_MAX);
+	uint64_t		left;
+	uint64_t		right;
+	uint64_t		carry = 0;
+	uint64_t		intemediate_res;
+	const int		chunks_count = size / 32;
+	size_t			radix = static_cast<size_t>(UINT32_MAX) + 1;
+	bitset<size>	mask(UINT32_MAX);
+	bitset<size>	carry_bs;
+	bitset<size>	inter_res_bs;
+
+//	cout << "L " << lhs.to_string() << endl;
+//	cout << "R " << rhs.to_string() << endl << endl;
 
 	for (size_t i = 0; i < chunks_count; ++i) {
-		left = (lhs & mask_get).to_ulong();
-		right = (lhs & mask_get).to_ulong();
+//		cout << "M " << mask.to_string() << endl;
+//		cout << "M " << (~mask).to_string() << endl;
+		left  = ((lhs & mask) >> (32 * i)).to_ulong();
+		right = ((rhs & mask) >> (32 * i)).to_ulong();
+
+//		cout << "L " << bitset<size>(left).to_string()  << " " << left << endl;
+//		cout << "R " << bitset<size>(right).to_string() << " " << right << endl;
+//		cout << "C " << bitset<size>(carry).to_string() << " " << carry << endl;
+
 		intemediate_res = left + right + carry;
-		carry = intemediate_res / UINT32_MAX;
-		intemediate_res %= UINT32_MAX;
-		lhs &= mask_set;
-		lhs |= intemediate_res;
-		//lhs &=
-		//lhs[i] = sum_bits(lhs[i], rhs[i], carry);
+
+//		cout << "I " << bitset<size>(intemediate_res).to_string() << " " << intemediate_res << endl;
+
+		carry = intemediate_res >> 32u;
+
+		//carry_bs = carry;
+		//carry_bs <<= 32 * (i + 1);
+		intemediate_res &= radix - 1;
+
+//		cout << "C " << bitset<size>(carry).to_string() << " " << carry << endl;
+//		cout << "I " << bitset<size>(intemediate_res).to_string() << " " << intemediate_res << endl;
+
+		lhs &= ~mask;
+		inter_res_bs = intemediate_res;
+		inter_res_bs <<= 32u * i;
+		lhs |= inter_res_bs;
+		mask <<= 32u;
+		//radix += UINT32_MAX;
+
+//		cout << "+ " << lhs.to_string() << endl << endl;
 	}
 	return lhs;
 }
@@ -78,7 +104,9 @@ bitset<size>& operator*=(bitset<size>& lhs, const bitset<size>& rhs)
 	else {
 		for (size_t i = 0; i < size; ++i) {
 			if (rhs[i]) {
+//				cout << lhs.to_ullong() << " + " << (tmp << i).to_ullong() << " = ";
 				lhs += tmp << i;
+//				cout << lhs.to_ullong() << endl;
 			}
 		}
 	}
@@ -190,8 +218,8 @@ size_t operator%(bitset<size> lhs, bitset<size> rhs)
 
 bool test_one_mult(size_t left, size_t right)
 {
-	bitset<100> bs_l(left);
-	bitset<100> bs_r(right);
+	bitset<128> bs_l(left);
+	bitset<128> bs_r(right);
 
 	bs_l *= right;
 	bs_r *= left;
@@ -200,18 +228,17 @@ bool test_one_mult(size_t left, size_t right)
 
 bool test_one_sum(size_t left, size_t right)
 {
-	bitset<100> bs_l(left);
-	bitset<100> bs_r(right);
-
-	bitset<100> arg_l(left);
-	bitset<100> arg_r(right);
+	bitset<128> bs_l(left);
+	bitset<128> bs_r(right);
+	bitset<128> arg_l(left);
+	bitset<128> arg_r(right);
 
 	bs_l += arg_r;
 	bs_r += arg_l;
 
-	cout << bs_l.to_string() << endl;
-	cout << arg_r.to_string() << endl;
-	cout << bs_l.to_string() << endl;
+	//cout << bs_l.to_string() << endl;
+	//cout << arg_r.to_string() << endl;
+	//cout << bs_l.to_string() << endl;
 
 	return (bs_l == left + right) && (bs_r == left + right);
 }
@@ -252,19 +279,37 @@ void print(bitset<size> tmp)
 	cout << tmp << endl;
 }
 
+void test()
+{
+	//2395008000 + 3832012800
+	size_t left = 2395008000;
+	size_t right = 3832012800;
+
+	bitset<128> lhs(left);
+	bitset<128> rhs(right);
+
+	lhs += rhs;
+	left += right;
+	cout << lhs.to_ullong() << endl;
+	cout << left << endl;
+}
+
 void print_factorial(int n)
 {
 	if (n < 0)  { cout << "Argument must be positive" << endl; return; }
 	const int bits_count = 20032; // 2000! requires 19054 bits and 20032 % 64 == 0
 
-	///bitset<bits_count> tmp;
-	///bitset<bits_count> bs = long_factorial(n, tmp);
+	bitset<bits_count> tmp;
+	bitset<bits_count> bs = long_factorial(n, tmp);
 
 //	for (int i = 1; i <= n; ++i) {
 //		bs *= i;
 //	}
 
 	//print(bs);
+
+//	test();
+
 
 	//bs = 100;
 	//cout << bs % 32 << endl;
@@ -281,17 +326,17 @@ void print_factorial(int n)
 	//cout << mask.to_string() << endl;
 
 
-	cout << "Start test" << endl;
-	for (int i = 0; i < 1000; ++i) {
-		for (int j = 1; j < 1000; ++j) {
-			if (!test_one_sum(i, j)) {
-				cout << "Error: " << i << " " << j << endl;
-				return;
-			}
-			cout << i * 1000 + j << "\r";
-		}
-	}
-	cout << "End test" << endl;
+//	cout << "Start test" << endl;
+//	for (size_t i = 479001600; i < 479001600 + 1000; ++i) {
+//		for (size_t j = 0; j < 1000; ++j) {
+//			if (!test_one_mult(i, j)) {
+//				cout << "Error: " << i << " " << j << endl;
+//				return;
+//			}
+//			cout << i * 1000 + j << "\r";
+//		}
+//	}
+//	cout << "End test" << endl;
 
 //	bitset<100> bs(2);
 //	bs *= 2147483645;
