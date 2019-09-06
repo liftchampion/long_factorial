@@ -40,50 +40,10 @@ static inline int find_active_block_begin(bitset<size> bs)
 template <size_t size>
 bitset<size>& operator+=(bitset<size>& lhs, const bitset<size>& rhs)
 {
-	uint64_t		left;
-	uint64_t		right;
-	uint64_t		carry = 0;
-	uint64_t		intemediate_res;
-	const int		chunks_count = size / 32;
-	size_t			radix = static_cast<size_t>(UINT32_MAX) + 1;
-	bitset<size>	mask(UINT32_MAX);
-	bitset<size>	carry_bs;
-	bitset<size>	inter_res_bs;
+	bool carry = false;
 
-//	cout << "L " << lhs.to_string() << endl;
-//	cout << "R " << rhs.to_string() << endl << endl;
-
-	for (size_t i = 0; i < chunks_count; ++i) {
-//		cout << "M " << mask.to_string() << endl;
-//		cout << "M " << (~mask).to_string() << endl;
-		left  = ((lhs & mask) >> (32 * i)).to_ulong();
-		right = ((rhs & mask) >> (32 * i)).to_ulong();
-
-//		cout << "L " << bitset<size>(left).to_string()  << " " << left << endl;
-//		cout << "R " << bitset<size>(right).to_string() << " " << right << endl;
-//		cout << "C " << bitset<size>(carry).to_string() << " " << carry << endl;
-
-		intemediate_res = left + right + carry;
-
-//		cout << "I " << bitset<size>(intemediate_res).to_string() << " " << intemediate_res << endl;
-
-		carry = intemediate_res >> 32u;
-
-		//carry_bs = carry;
-		//carry_bs <<= 32 * (i + 1);
-		intemediate_res &= radix - 1;
-
-//		cout << "C " << bitset<size>(carry).to_string() << " " << carry << endl;
-//		cout << "I " << bitset<size>(intemediate_res).to_string() << " " << intemediate_res << endl;
-
-		lhs &= ~mask;
-		inter_res_bs = intemediate_res;
-		inter_res_bs <<= 32u * i;
-		lhs |= inter_res_bs;
-		mask <<= 32u;
-		//radix += UINT32_MAX;
-
-//		cout << "+ " << lhs.to_string() << endl << endl;
+	for (size_t i = 0; i < size; ++i) {
+		lhs[i] = sum_bits(lhs[i], rhs[i], carry);
 	}
 	return lhs;
 }
@@ -160,6 +120,28 @@ bool operator<(const bitset<size>& lhs, const bitset<size>& rhs)
 }
 
 template <size_t size>
+bool operator<=(const bitset<size>& lhs, const bitset<size>& rhs)
+{
+	for (int i = size; i >= 0; --i) {
+		if (lhs[i] != rhs[i]) {
+			return rhs[i];
+		}
+	}
+	return true;
+}
+
+template <size_t size>
+bool operator>(const bitset<size>& lhs, const bitset<size>& rhs)
+{
+	for (int i = size; i >= 0; --i) {
+		if (lhs[i] != rhs[i]) {
+			return lhs[i];
+		}
+	}
+	return false;
+}
+
+template <size_t size>
 bool operator>=(const bitset<size>& lhs, const bitset<size>& rhs)
 {
 	for (int i = size; i >= 0; --i) {
@@ -216,6 +198,68 @@ size_t operator%(bitset<size> lhs, bitset<size> rhs)
 	return (lhs.to_ullong());
 }
 
+template <size_t size>
+bitset<size> division_recursion(bitset<size> dividend, bitset<size> divisor, size_t& reminder)
+{
+	bitset<size> quotient(0);
+	bitset<size> curr_quotient(0);
+	bitset<size> original_divisor(divisor);
+
+	//size_t reminder;
+
+	static int deep = 0;
+
+	while (dividend > divisor) {
+		curr_quotient = 1;
+		while (divisor <= dividend) {
+			divisor <<= 1u;
+			curr_quotient <<= 1u;
+		}
+		if (dividend < divisor) {
+			divisor >>= 1u;
+			curr_quotient >>= 1u;
+		}
+		dividend -= divisor;
+		quotient += curr_quotient;
+		divisor = original_divisor;
+	}
+	if (dividend == divisor) {
+		reminder = 0;
+		quotient += bitset<size>(1);
+	} else {
+		reminder = dividend.to_ullong();
+	}
+	return quotient;
+
+
+
+//	cout << ++deep << endl;
+//	if (dividend == divisor) { remainder = 0; return 1; }
+//	else if (dividend < divisor) { remainder = dividend.to_ullong(); return 0; }
+//
+//	while (divisor <= dividend) {
+//		divisor <<= 1u;
+//		quotient <<= 1u;
+//	}
+//	if (dividend < divisor) {
+//		divisor >>= 1u;
+//		quotient >>= 1u;
+//	}
+//	dividend -= divisor;
+	//	quotient += division_recursion(dividend, original_divisor, original_divisor, remainder);
+//
+//
+//	return quotient;
+}
+
+template <size_t size>
+pair<bitset<size>, size_t> divide(bitset<size> lhs, const bitset<size>& rhs)
+{
+	size_t reminder = 0;
+	bitset<size> quotient = division_recursion(lhs, rhs, reminder);
+	return make_pair(quotient, reminder);
+}
+
 bool test_one_mult(size_t left, size_t right)
 {
 	bitset<128> bs_l(left);
@@ -253,8 +297,9 @@ ostream& operator<<(ostream& os, bitset<size> bs)
 
 	while (bs != zero)
 	{
-		res.push_back(bs % radix);
-		bs = bs / radix;
+		auto division_result = divide(bs, radix);
+		res.push_back(division_result.second);
+		bs = division_result.first;
 	}
 	reverse(res.begin(), res.end());
 	for (const auto item : res) {
@@ -306,7 +351,7 @@ void print_factorial(int n)
 //		bs *= i;
 //	}
 
-	//print(bs);
+	print(bs);
 
 //	test();
 
