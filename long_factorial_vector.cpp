@@ -13,30 +13,56 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <deque>
 
 using namespace std;
 
+class BigInt;
+ostream& operator<<(ostream& os, const BigInt& bigint);
+
+ostream& operator<<(ostream& os, __uint128_t gg) {
+
+	uint64_t left = gg / 1'000'000'000'000'000'000lu;
+	uint64_t right = gg % 1'000'000'000'000'000'000lu;
+
+	if (!left && !right) { cout << '0'; }
+	if (left) { cout << left; }
+	if (right) { cout << right; }
+	cout << endl;
+	return os;
+}
+
 class BigInt {
 public:
-	BigInt() = default;
-	explicit BigInt(size_t num) {
-		while (num >= radix) {
-			this->data.push_back(num % radix);
-			num /= radix;
+	BigInt() : data(1, 0) {};
+	explicit BigInt(__uint128_t val) {
+//		cout << "Got value: " << val << endl;
+		while (val >= radix) {
+			data.push_back(val % radix);
+			val /= radix;
 		}
-		this->data.push_back(num);
+		data.push_back(val);
 	}
+	BigInt& operator=(const BigInt& other) {
+		this->data = other.data;
+		return *this;
+	}
+	[[nodiscard]]
 	size_t len() const {
-		return this->data.size();
+		return data.size();
+	}
+	[[nodiscard]]
+	bool is_zero() const {
+		return (len() == 1 && data[0] == 0);
 	}
 	size_t operator[](size_t idx) const{
-		return idx < this->len() ? this->data[idx] : 0;
+		return idx < len() ? data[idx] : 0;
 	}
 	size_t& operator[](size_t idx){
-		if (this->len() <= idx) {
-			this->data.resize(idx + 1, 0);
+		if (len() <= idx) {
+			data.resize(idx + 1, 0);
 		}
-		return this->data[idx];
+		return data[idx];
 	}
 	BigInt& operator+=(const BigInt& other) {
 		size_t carry = 0;
@@ -57,55 +83,81 @@ public:
 		return *this;
 	}
 	BigInt& operator*=(size_t other) {
-		size_t		carry = 0;
-		size_t		go_to = this->len();
-		__uint128_t	intermediate_res;
-
-		for (size_t i = 0; i < go_to || carry; ++i) {
-			intermediate_res = static_cast<__uint128_t>((*this)[i]) * other;
-			carry = intermediate_res
+		if (this->is_zero()) { return *this; }
+		if (!other) { *this = BigInt(0); return *this; }
+		if (other == radix) {
+			this->data.push_front(0);
+			return *this;
 		}
+
+		BigInt		res(0);
+
+//		cout << "res0: " << res << endl;
+		for (int i = static_cast<int>(this->len()) - 1; i >= 0; --i) {
+			res *= radix;
+//			cout << "res1: " << res << endl;
+
+
+//			cout << "Going to create new from " << (*this)[i] << " and " << other << endl;
+			BigInt tmp = BigInt(static_cast<__uint128_t>((*this)[i]) * other);
+//			cout << "tmp:  " << tmp << endl;
+
+			res += tmp;
+//			cout << "res2: " << res << endl;
+		}
+		*this = res;
 		return *this;
 	}
-	const vector<size_t>& get_data() const{ // todo no need ?
+	[[nodiscard]]
+	const deque<size_t>& get_data() const{ // todo no need ?
 		return this->data;
 	}
 private:
-	vector<size_t> data;
+	deque<size_t> data;
 	const size_t radix = 1'000'000'000'000'000'000lu;
 };
 
 ostream& operator<<(ostream& os, const BigInt& bigint){
-	if (!bigint.len()) {
-		os << '0';
-	}
-	else {
-		bool is_first = true;
-		for (int i = static_cast<int>(bigint.len()) - 1; i >= 0; --i) {
-			if (i == is_first) {
-				os << bigint[i];
-			} else {
-				os << setw(18) << setfill('0') << bigint[i];
-			}
+//	if (bigint.is_zero()) {
+//		cout << '0';
+//		return os;
+//	}
+	bool is_first = true;
+	for (int i = static_cast<int>(bigint.len()) - 1; i >= 0; --i) {
+		if (is_first) {
+			os << bigint[i];
+			is_first = false;
+		} else {
+			os << setw(18) << setfill('0') << bigint[i];
 		}
 	}
-//	cout << bigint.len() << ": ";
+//	cout << endl << bigint.len() << ": ";
 //	for (const auto i : bigint.get_data()) {
 //		cout << i << " ";
 //	}
 	return os;
 }
 
-int main()
+BigInt factorial(int n) {
+	BigInt res(1);
+
+	for (int i = 1; i <= n; ++i) {
+		res *= i;
+	}
+	return res;
+}
+
+int main(int ac, char **av)
 {
-	BigInt num;
+	BigInt num(0);
 	BigInt other(10'000'000'000'000'000'000lu);
 
-	cout << num << endl;
-	cout << other << endl;
-	for (size_t i = 0; i < 20000; ++i) {
-		num += 500'000'000'000'000'000lu;
-		//cout << num << endl;
-	}
-	cout << num << endl;
+	num += 1;
+	//size_t fact = atoi(av[1]);
+
+	num = factorial(atoi(av[1]));
+	//cout << endl << endl << endl << endl << endl;
+	cout <<  num << endl;
+//	num *= 29;
+//	cout << "29: " << num << endl;
 }
