@@ -199,15 +199,12 @@ size_t operator%(bitset<size> lhs, bitset<size> rhs)
 }
 
 template <size_t size>
-bitset<size> division_recursion(bitset<size> dividend, bitset<size> divisor, size_t& reminder)
+pair<bitset<size>, size_t> divide(bitset<size> dividend, bitset<size> divisor)
 {
-	bitset<size> quotient(0);
-	bitset<size> curr_quotient(0);
-	bitset<size> original_divisor(divisor);
-
-	//size_t reminder;
-
-	static int deep = 0;
+	bitset<size>	quotient(0);
+	bitset<size>	curr_quotient(0);
+	bitset<size>	original_divisor(divisor);
+	size_t			reminder;
 
 	while (dividend > divisor) {
 		curr_quotient = 1;
@@ -229,34 +226,6 @@ bitset<size> division_recursion(bitset<size> dividend, bitset<size> divisor, siz
 	} else {
 		reminder = dividend.to_ullong();
 	}
-	return quotient;
-
-
-
-//	cout << ++deep << endl;
-//	if (dividend == divisor) { remainder = 0; return 1; }
-//	else if (dividend < divisor) { remainder = dividend.to_ullong(); return 0; }
-//
-//	while (divisor <= dividend) {
-//		divisor <<= 1u;
-//		quotient <<= 1u;
-//	}
-//	if (dividend < divisor) {
-//		divisor >>= 1u;
-//		quotient >>= 1u;
-//	}
-//	dividend -= divisor;
-	//	quotient += division_recursion(dividend, original_divisor, original_divisor, remainder);
-//
-//
-//	return quotient;
-}
-
-template <size_t size>
-pair<bitset<size>, size_t> divide(bitset<size> lhs, const bitset<size>& rhs)
-{
-	size_t reminder = 0;
-	bitset<size> quotient = division_recursion(lhs, rhs, reminder);
 	return make_pair(quotient, reminder);
 }
 
