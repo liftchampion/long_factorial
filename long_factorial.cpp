@@ -14,6 +14,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -23,18 +24,6 @@ static inline bool sum_bits(bool b1, bool b2, bool& carry)
 
 	carry = (b1 && b2) || (b1 && carry) || (b2 && carry);
 	return sum;
-}
-
-template <size_t size>
-static inline int find_active_block_begin(bitset<size> bs)
-{
-	static const bitset<size> mask(UINT64_MAX);
-
-	for (size_t i = 1; i <= size / 64; ++i) {
-		string str = ((bs >> (size - 64 * i)) & mask).to_string();
-		cout << string(str.end() - 64, str.end()) << endl;
-		//cout << ((bs >> (bits_count - 64 * i)) & mask).to_ullong() << endl;
-	}
 }
 
 template <size_t size>
@@ -64,9 +53,7 @@ bitset<size>& operator*=(bitset<size>& lhs, const bitset<size>& rhs)
 	else {
 		for (size_t i = 0; i < size; ++i) {
 			if (rhs[i]) {
-//				cout << lhs.to_ullong() << " + " << (tmp << i).to_ullong() << " = ";
 				lhs += tmp << i;
-//				cout << lhs.to_ullong() << endl;
 			}
 		}
 	}
@@ -229,50 +216,27 @@ pair<bitset<size>, size_t> divide(bitset<size> dividend, bitset<size> divisor)
 	return make_pair(quotient, reminder);
 }
 
-bool test_one_mult(size_t left, size_t right)
-{
-	bitset<128> bs_l(left);
-	bitset<128> bs_r(right);
-
-	bs_l *= right;
-	bs_r *= left;
-	return (bs_l == left * right) && (bs_r == left * right);
-}
-
-bool test_one_sum(size_t left, size_t right)
-{
-	bitset<128> bs_l(left);
-	bitset<128> bs_r(right);
-	bitset<128> arg_l(left);
-	bitset<128> arg_r(right);
-
-	bs_l += arg_r;
-	bs_r += arg_l;
-
-	//cout << bs_l.to_string() << endl;
-	//cout << arg_r.to_string() << endl;
-	//cout << bs_l.to_string() << endl;
-
-	return (bs_l == left + right) && (bs_r == left + right);
-}
-
 template <size_t size>
 ostream& operator<<(ostream& os, bitset<size> bs)
 {
-	vector<size_t> res;
-	static const bitset<size> radix(10'000'000'000'000'000'000u);
-	//static const bitset<size> radix(1000u);
-	static const bitset<size> zero(0);
+	vector<size_t>				res;
+	static const bitset<size>	radix(10'000'000'000'000'000'000u);
+	static const bitset<size>	zero(0);
+	bool 						is_first = true;
 
-	while (bs != zero)
-	{
+	while (bs != zero) {
 		auto division_result = divide(bs, radix);
 		res.push_back(division_result.second);
 		bs = division_result.first;
 	}
 	reverse(res.begin(), res.end());
 	for (const auto item : res) {
-		cout << item;
+		if (is_first) {
+			cout << item;
+			is_first = false;
+		} else {
+			cout  << setw(19) << setfill('0') << item;
+		}
 	}
 	return os;
 }
@@ -293,21 +257,6 @@ void print(bitset<size> tmp)
 	cout << tmp << endl;
 }
 
-void test()
-{
-	//2395008000 + 3832012800
-	size_t left = 2395008000;
-	size_t right = 3832012800;
-
-	bitset<128> lhs(left);
-	bitset<128> rhs(right);
-
-	lhs += rhs;
-	left += right;
-	cout << lhs.to_ullong() << endl;
-	cout << left << endl;
-}
-
 void print_factorial(int n)
 {
 	if (n < 0)  { cout << "Argument must be positive" << endl; return; }
@@ -315,45 +264,7 @@ void print_factorial(int n)
 
 	bitset<bits_count> tmp;
 	bitset<bits_count> bs = long_factorial(n, tmp);
-
-//	for (int i = 1; i <= n; ++i) {
-//		bs *= i;
-//	}
-
 	print(bs);
-
-//	test();
-
-
-	//bs = 100;
-	//cout << bs % 32 << endl;
-
-
-	//cout << bs.to_string() << endl;
-
-//	for (int i = 1; i <= bits_count / 64; ++i) {
-//		string str = ((bs >> (bits_count - 64 * i)) & mask).to_string();
-//		cout << string(str.end() - 64, str.end()) << endl;
-//		//cout << ((bs >> (bits_count - 64 * i)) & mask).to_ullong() << endl;
-//	}
-
-	//cout << mask.to_string() << endl;
-
-
-//	cout << "Start test" << endl;
-//	for (size_t i = 479001600; i < 479001600 + 1000; ++i) {
-//		for (size_t j = 0; j < 1000; ++j) {
-//			if (!test_one_mult(i, j)) {
-//				cout << "Error: " << i << " " << j << endl;
-//				return;
-//			}
-//			cout << i * 1000 + j << "\r";
-//		}
-//	}
-//	cout << "End test" << endl;
-
-//	bitset<100> bs(2);
-//	bs *= 2147483645;
 }
 
 int main(int ac, char **av)
