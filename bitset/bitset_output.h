@@ -17,6 +17,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 #include "bitset_arithmetic.h"
 #include "bitset_cmp.h"
 
