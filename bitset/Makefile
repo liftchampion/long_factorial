@@ -3,7 +3,7 @@ SRC = $(wildcard *.cpp)
 OBJ=$(SRC:.cpp=.o)
 CC = g++
 CFLAGS = --std=c++1z -Wall -Wextra -O3
-HDR = big_int.h factorial.h
+HDR = $(wildcard *.h)
 
 all: $(NAME)
 
