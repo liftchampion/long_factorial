@@ -165,7 +165,7 @@ template <size_t size>
 int operator/(bitset<size> lhs, const bitset<size>& rhs)
 {
 	if (!rhs.count()){
-		throw domain_error("division by zero undefined"); // todo check exc type
+		throw domain_error("division by zero undefined");
 	}
 	int res = 0;
 	while (lhs >= rhs) {
