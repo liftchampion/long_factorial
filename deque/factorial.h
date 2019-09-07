@@ -15,21 +15,19 @@
 #include <vector>
 #include "big_int.h"
 
-using namespace std;
-
 BigInt factorial(int n);
 
-vector<BigInt> small_multiplies(int n);
+std::vector<BigInt> small_multiplies(int n);
 
-BigInt	big_multiplies(vector<BigInt> multipliers);
+BigInt	big_multiplies(std::vector<BigInt> multipliers);
 
-static vector<BigInt> default_vector;
+static std::vector<BigInt> default_vector;
 template <typename T>
-void	divide_and_conquer_multiply(vector<T>& multipliers,
-									vector<BigInt>& big_multipliers = default_vector)
+void	divide_and_conquer_multiply(std::vector<T>& multipliers,
+									std::vector<BigInt>& big_multipliers = default_vector)
 {
-	size_t		size;
-	vector<T>	tmp;
+	size_t			size;
+	std::vector<T>	tmp;
 
 	tmp.reserve(multipliers.size() + 1);
 	while (multipliers.size() > 1) {
@@ -39,7 +37,7 @@ void	divide_and_conquer_multiply(vector<T>& multipliers,
 			if (typeid(T) == typeid(BigInt) ||
 				multipliers[i] <= UINT32_MAX)
 			{
-				tmp.emplace_back(move(multipliers[i]));
+				tmp.emplace_back(std::move(multipliers[i]));
 			}
 			else {
 				big_multipliers.emplace_back(BigInt(multipliers[i]));
